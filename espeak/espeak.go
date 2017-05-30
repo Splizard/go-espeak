@@ -13,14 +13,14 @@ unsigned int *unique_identifier;
 
 static int EspeakInit()
 {
-		return (int) espeak_Initialize(0, 500, NULL, 0); 
+		return (int) espeak_Initialize(0, 500, NULL, 0);
 }
 
-static int EspeakSynth(const char *text, unsigned int position, espeak_POSITION_TYPE position_type, unsigned int end_position)
+static int EspeakSynth(const char *text, unsigned int position, espeak_POSITION_TYPE position_type, unsigned int end_position, unsigned int flags)
 {
 		unsigned int size_t;
 		size_t = strlen(text)+1;
-		return (int) espeak_Synth( text, size_t, position, position_type, end_position, 1,
+		return (int) espeak_Synth( text, size_t, position, position_type, end_position, flags,
     unique_identifier, user_data );
 }
 
@@ -46,6 +46,15 @@ const (
 	POS_SENTENCE  EspeakPositionType = 3
 )
 
+type EspeakSynthFlag int
+
+const (
+	FLAG_SSML          EspeakSynthFlag = 0x10
+	FLAG_PHONEMES      EspeakSynthFlag = 0x100
+	FLAG_ENDPAUSE      EspeakSynthFlag = 0x1000
+	FLAG_KEEP_NAMEDATA EspeakSynthFlag = 0x2000
+)
+
 func Init() int {
 	return int(C.EspeakInit())
 }
@@ -65,13 +74,25 @@ func SetVoiceByName(voice string) int {
 func Synth(text string, position uint, positionType EspeakPositionType, endPosition uint) int {
 	ctext := C.CString(text)
 	defer C.free(unsafe.Pointer(ctext))
-	return int(C.EspeakSynth(ctext, C.uint(position), C.espeak_POSITION_TYPE(positionType), C.uint(endPosition)))
+	return int(C.EspeakSynth(ctext, C.uint(position), C.espeak_POSITION_TYPE(positionType), C.uint(endPosition), C.uint(1)))
+}
+
+func SynthFlags(text string, position uint, positionType EspeakPositionType, endPosition uint, flags EspeakSynthFlag) int {
+	ctext := C.CString(text)
+	defer C.free(unsafe.Pointer(ctext))
+
+	// Ensure that one of the espeakCHARS flags is set. If not, set UTF8.
+	if flags&0x7 == 0 {
+		flags |= 1
+	}
+
+	return int(C.EspeakSynth(ctext, C.uint(position), C.espeak_POSITION_TYPE(positionType), C.uint(endPosition), C.uint(flags)))
 }
 
 func Say(text string) int {
 	ctext := C.CString(text)
 	defer C.free(unsafe.Pointer(ctext))
-	return int(C.EspeakSynth(ctext, C.uint(0), C.espeak_POSITION_TYPE(0), C.uint(0)))
+	return int(C.EspeakSynth(ctext, C.uint(0), C.espeak_POSITION_TYPE(0), C.uint(0), C.uint(1)))
 }
 
 func Synchronize() int {
@@ -109,11 +130,11 @@ func SetParameter(parameter EspeakParameter, value int, relative int) int {
 }
 
 func GetParameter(parameter EspeakParameter) int {
-	return int(C.espeak_GetParameter(C.espeak_PARAMETER(parameter),1))
+	return int(C.espeak_GetParameter(C.espeak_PARAMETER(parameter), 1))
 }
 
 func GetDefaultParameter(parameter EspeakParameter) int {
-	return int(C.espeak_GetParameter(C.espeak_PARAMETER(parameter),0))
+	return int(C.espeak_GetParameter(C.espeak_PARAMETER(parameter), 0))
 }
 
 func Cancel() int {
