@@ -6,20 +6,13 @@ Go binding for Espeak
 INSTALL:
 --------
 
-  To experiment with go-espeak, you can just compile and run the example
-  program:
-
-    git clone  https://github.com/Splizard/go-espeak
-    cd go-espeak
-    make install
-    make example
-    ./example/helloworld/helloworld
-
-  Or
-
     go get github.com/Splizard/go-espeak
 
   Don't forget, that you need the Espeak-Development-Packages.
+  
+  On Ubuntu:
+  
+  	sudo apt-get install libespeak-dev
 
 LICENSE:
 --------
